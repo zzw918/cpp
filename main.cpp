@@ -3,23 +3,21 @@
 #include <cmath>
 #include <fstream>
 #include <cstring>
+#include <iomanip>
 #include <direct.h>
 #include <windows.h>
-#include "phi.h"
 #define PI 3.1415926
 using namespace std; 
 
-extern const int N = 6; // add extern so phi.h can have access
-extern const int Nx = 100; // Nx is pow(3, 0.5) times of Ny
-extern const int Ny = 100; 
+const int N = 6; // the total number of grains
+const int Nx = 120; // the x-axis grid numbers
+const int Ny = 120; // the y-axis grid numbers
 
 int ti(int); // deal with x-axis periodic boundry
 int tj(int); // deal with y-axis periodic boundry
-
-// difine the output function
-int output(double phi_b[][Nx][Ny], int N, int Nx, int Ny, int fileNum);
-int init(double phi[][Nx][Ny], double[][Nx][Ny], int N, int Nx, int Ny);
-int foo(double phi[][Nx][Ny], double phi_b[][Nx][Ny], int n, int i, int j);
+void output(double phi_b[][Nx][Ny], int N, int Nx, int Ny, int fileNum); // difine the output function
+void init(double phi[][Nx][Ny], double[][Nx][Ny], int N, int Nx, int Ny); // define the initiated function
+void init_zero(double phi[][Nx][Ny], double phi_b[][Nx][Ny], int n, int i, int j); // init the area where is not belong to the core
 
 int main()
 {
@@ -31,34 +29,35 @@ int main()
 
     // init the phi value
     init(phi, phi_b, N, Nx, Ny);
-    output(phi_b, N, Nx, Ny, 100);
+
+    // output the initiated file here
+    output(phi_b, N, Nx, Ny, 000);
 
     // set the interval time and the whole time
-    double deltaT = 0.01;                     // timeInterval
-    double allTime = 5.0;                  // the whole time to grow
+    double deltaT = 0.005,                 // timeInterval
+           allTime = 5.0;                  // the whole time to grow
 
-    double garma = 0.208;                 //  J/m2
-    double deltaX = 0.5e-6;
-    double Qb = 110e3;                               //  j/mol
-    double R = 8.314;                              //  j/(K*mol)
-    double T = 800.0;                                //  T is Kelvin's temperature
-    double thigma = 7 * deltaX;           // delta x is 0.5um，use the 'm'
-    double W = 4 * garma / thigma;
-    double a = (2 / PI) * pow(2 * thigma * garma, 0.5);
-    double M = (0.139 / T) * exp(-Qb / (R * T)) * PI * PI / (8 * thigma);
-    cout << M << " " << W << " " << a << " ";
+    double garma = 0.208,                  //  J/m2
+           deltaX = 0.5e-6,
+           Qb = 110e3,                     //  j/mol
+           R = 8.314,                      //  j/(K*mol)
+           T = 800.0,                      //  T is Kelvin's temperature
+           thigma = 7 * deltaX,            // delta x is 0.5um，use the 'm'
+           W = 4 * garma / thigma,
+           a = (2 / PI) * pow(2 * thigma * garma, 0.5),
+           M = (0.139 / T) * exp(-Qb / (R * T)) * PI * PI / (8 * thigma);
 
     double curTime = 0.0;
-    int aid = 0;
-    int number = 0;
+    int aid = 0; // to help show output
+    int number = 1; // filename number mark
 
-    int files = 6;
+    int files = 8; // file numbers
 
     while (curTime < allTime)
     {   
         // every specified times to description. 
         if ((aid % (int(allTime / deltaT) / files)) == 0) {
-            cout << double(curTime / allTime) * 100 << "% has calculated..." << endl;
+            cout << fixed << setprecision(0) << double(curTime / allTime) * 100 << "% has been calculated..." << endl;
         }
 
         aid++;
@@ -86,6 +85,7 @@ int main()
             }
         }
 
+        // make sure that the sum of grains of one grid is 1
         for (int i = 0; i < Nx; i++)
         {
             for (int j = 0; j < Ny; j++)
@@ -106,6 +106,7 @@ int main()
             }
         }
 
+        // assign the phi value from the phi_b value
         for (int n = 0; n < N; n++)
         {
             for (int i = 0; i < Nx; i++)
@@ -117,18 +118,14 @@ int main()
             }
         }
 
-        curTime += deltaT;
+        curTime += deltaT; // time added
+
         if (aid % ((int)(allTime / deltaT) / files) == 0)
         {
-            // 输出数据文件
-            output(phi_b, N, Nx, Ny, number);
-            number++;
+            // output every period data
+            output(phi_b, N, Nx, Ny, number++);
         }
     }
-
-    // output the file
-    // output(phi_b, N, Nx, Ny, 0);
-
     cout << "calculate end!" << endl << endl;
     system("pause");
     return 0;
@@ -136,38 +133,37 @@ int main()
 
 
 
-// 定义初始化函数
-int init(double phi[][Nx][Ny], double phi_b[][Nx][Ny], int N, int Nx, int Ny) {
-    int round = 2;
+// define the initiated function
+void init(double phi[][Nx][Ny], double phi_b[][Nx][Ny], int N, int Nx, int Ny) {
+    int round = 3;
     for (int n = 0; n < N; n++)
     {
         for (int i = 0; i < Nx; i++)
         {
             for (int j = 0; j < Ny; j++)
             {
-                phi[n][i][j] = phi_b[n][i][j] = 0.165; // 0
+                phi[n][i][j] = phi_b[n][i][j] = 1.0/6.0;
 
-                // 将6个晶粒进行初始化，即特定位置的phi为1，其他位置都是0
-                // 中间的三个进行初始化
+                // init the middle three grains
                 if (n == 0 || n == 1 || n == 2)
                 {
                     if (j <= Ny / 2.0 + round && j >= Ny / 2.0 - round)
                     {
-                        // 注意：这里取6.0是因为int型相除得到的是int型，而只要分子或者分母有一个是double型，结果就是double型
+                        // HTNT: here we should be attention to avoid the type changing.
                         if (n == 0 && (i <= Nx / 6.0 + round && i >= Nx / 6.0 - round))
                         {
-                            phi[0][i][j] = phi_b[0][i][j] = 1.0; // 第一个
-                            foo(phi, phi_b, n, i, j);
+                            phi[0][i][j] = phi_b[0][i][j] = 1.0; // the first one
+                            init_zero(phi, phi_b, n, i, j);
                         }
                         else if (n == 1 && (i <= (Nx / 6.0) * 3 + round && i >= (Nx / 6.0) * 3 - round))
                         {   
-                            phi[1][i][j] = phi_b[1][i][j] = 1.0; // 第二个
-                            foo(phi, phi_b, n, i, j);
+                            phi[1][i][j] = phi_b[1][i][j] = 1.0; // the second one
+                            init_zero(phi, phi_b, n, i, j);
                         }
                         else if (n == 2 && (i <= (Nx / 6.0) * 5 + round && i >= (Nx / 6.0) * 5 - round))
                         {
-                            phi[2][i][j] = phi_b[2][i][j] = 1.0; // 第三个
-                            foo(phi, phi_b, n, i, j);
+                            phi[2][i][j] = phi_b[2][i][j] = 1.0; // the third one
+                            init_zero(phi, phi_b, n, i, j);
                         }
                     }
                 }
@@ -178,24 +174,24 @@ int init(double phi[][Nx][Ny], double phi_b[][Nx][Ny], int N, int Nx, int Ny) {
                     {
                         if (n == 3 && (i <= Nx / 3.0 + round && i >= Nx / 3.0 - round))
                         {
-                            phi[3][i][j] = phi_b[3][i][j] = 1.0; // 第四个
-                            foo(phi, phi_b, n, i, j);
+                            phi[3][i][j] = phi_b[3][i][j] = 1.0; // the forth one
+                            init_zero(phi, phi_b, n, i, j);
                         }
                         else if (n == 4 && (i <= (Nx / 3.0) * 2 + round && i >= (Nx / 3.0) * 2 - round))
                         {
-                            phi[4][i][j] = phi_b[4][i][j] = 1.0; //
-                            foo(phi, phi_b, n, i, j);
+                            phi[4][i][j] = phi_b[4][i][j] = 1.0; // the fifth one
+                            init_zero(phi, phi_b, n, i, j);
                         }
                     }
                 }
 
-                // 四个角的晶粒
+                // the corner of grid
                 else if (n == 5)
                 {
                     if ((i <= round && j <= round) || (i >= Nx - round && j <= round) || (i >= Nx - round && j >= Ny - round) || (i <= round && j >= Ny - round))
                     {
-                        phi[5][i][j] = phi_b[5][i][j] = 1.0; // 第六个
-                        foo(phi, phi_b, n, i, j);
+                        phi[5][i][j] = phi_b[5][i][j] = 1.0; // the sixth one
+                        init_zero(phi, phi_b, n, i, j);
                     }
                 }
             }
@@ -223,32 +219,34 @@ int init(double phi[][Nx][Ny], double phi_b[][Nx][Ny], int N, int Nx, int Ny) {
     }
 }
 
-// 初始化相关函数
-int foo(double phi[][Nx][Ny], double phi_b[][Nx][Ny], int n, int i, int j){
+// init the area where is not belong to the core
+void init_zero(double phi[][Nx][Ny], double phi_b[][Nx][Ny], int n, int i, int j){
     for (int x = 0; x < N; x++) {
         if (x != n) {
-            phi[x][i][j] = phi_b[x][i][j] = 0;
+            phi[x][i][j] = phi_b[x][i][j] = 0.0;
         }
     }
-    return 0;
 }
 
 
-// 定义输出函数，方便重复调用，fileNum是用来生成不同的vtk文件的
-int output(double phi_b[][Nx][Ny], int N, int Nx, int Ny, int fileNum) {
+// define the output function
+void output(double phi_b[][Nx][Ny], int N, int Nx, int Ny, int fileNum) {
 
     double phi_o[Nx][Ny];
     for (int i = 0; i < Nx; i++)
     {
         for (int j = 0; j < Ny; j++)
         {
-            // 这里一定要是double，而不能是int，否则得到的结果则全部为整数，而显示出现问题！
+            // HINT: here sum is "double" type not "int" type
             double sum = 0.0;
             for (int n = 0; n < N; n++)
             {
                 sum = sum + pow(phi_b[n][i][j], 2);
             }
             phi_o[i][j] = sum;
+            if (phi_o[i][j] > 1.0) {
+                phi_o[i][j] = 1.0;
+            }
         }
     }
 
@@ -292,5 +290,38 @@ int output(double phi_b[][Nx][Ny], int N, int Nx, int Ny, int fileNum) {
         }
     }
     outfile.close();
-    return 0;
+}
+
+int ti(int i)
+{
+    // i will be out of bound
+    if (i == -1)
+    {
+        return Nx - 2;
+    }
+    else if (i == Nx)
+    {
+        return 1;
+    }
+    else
+    {
+        return i;
+    }
+}
+
+int tj(int j)
+{
+    // i will be out of bound
+    if (j == -1)
+    {
+        return Ny - 2;
+    }
+    else if (j == Ny)
+    {
+        return 1;
+    }
+    else
+    {
+        return j;
+    }
 }
