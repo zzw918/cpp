@@ -11,12 +11,12 @@ using namespace std;
 
 const int N = 6; // the total number of grains
 const int Nx = 120; // the x-axis grid numbers
-const int Ny = 120; // the y-axis grid numbers
+const int Ny = 70; // the y-axis grid numbers
 
 int ti(int); // deal with x-axis periodic boundry
 int tj(int); // deal with y-axis periodic boundry
 void output(double phi_b[][Nx][Ny], int N, int Nx, int Ny, int fileNum); // difine the output function
-void init(double phi[][Nx][Ny], double[][Nx][Ny], int N, int Nx, int Ny); // define the initiated function
+void init(double phi[][Nx][Ny], double phi_b[][Nx][Ny], int N, int Nx, int Ny); // define the initiated function
 void init_zero(double phi[][Nx][Ny], double phi_b[][Nx][Ny], int n, int i, int j); // init the area where is not belong to the core
 
 int main()
@@ -30,12 +30,24 @@ int main()
     // init the phi value
     init(phi, phi_b, N, Nx, Ny);
 
+    // TEST, test the data, look if it is right
+    // for (int n = 0; n < N; n++) {
+    //     for (int i = 0; i < Nx; i++) {
+    //         for (int j = 0; j < Ny; j++) {
+    //             if (phi[n][i][j] == 1) {
+    //                 cout << n << " " << i << " " << j << endl;
+    //             }
+    //         }
+    //     }
+    // }
+
     // output the initiated file here
-    output(phi_b, N, Nx, Ny, 000);
+    output(phi_b, N, Nx, Ny, 0);
+
 
     // set the interval time and the whole time
-    double deltaT = 0.005,                 // timeInterval
-           allTime = 5.0;                  // the whole time to grow
+    double deltaT = 0.01,                 // timeInterval
+           allTime = 3.0;                  // the whole time to grow
 
     double garma = 0.208,                  //  J/m2
            deltaX = 0.5e-6,
@@ -136,63 +148,70 @@ int main()
 // define the initiated function
 void init(double phi[][Nx][Ny], double phi_b[][Nx][Ny], int N, int Nx, int Ny) {
     int round = 3;
+    // first, make all the grain's phi be 1.0/6.0
+    for (int n = 0; n < N; n++) {
+        for (int i = 0; i < Nx; i++) {
+            for (int j = 0; j < Ny; j++) {
+                phi[n][i][j] = phi_b[n][i][j] = 1.0/6.0;
+            }
+        }
+    }
+
     for (int n = 0; n < N; n++)
     {
         for (int i = 0; i < Nx; i++)
         {
             for (int j = 0; j < Ny; j++)
             {
-                phi[n][i][j] = phi_b[n][i][j] = 1.0/6.0;
-
                 // init the middle three grains
-                if (n == 0 || n == 1 || n == 2)
-                {
-                    if (j <= Ny / 2.0 + round && j >= Ny / 2.0 - round)
-                    {
-                        // HTNT: here we should be attention to avoid the type changing.
-                        if (n == 0 && (i <= Nx / 6.0 + round && i >= Nx / 6.0 - round))
+                switch (n) {
+                    case 0:
+                        if ((i <= Nx / 6.0 + round && i >= Nx / 6.0 - round) && (j <= Ny / 2.0 + round && j >= Ny / 2.0 - round))
                         {
                             phi[0][i][j] = phi_b[0][i][j] = 1.0; // the first one
                             init_zero(phi, phi_b, n, i, j);
                         }
-                        else if (n == 1 && (i <= (Nx / 6.0) * 3 + round && i >= (Nx / 6.0) * 3 - round))
-                        {   
+                        break;
+                        
+                    case 1:
+                        if ((i <= (Nx / 6.0) * 3 + round && i >= (Nx / 6.0) * 3 - round) && (j <= Ny / 2.0 + round && j >= Ny / 2.0 - round))
+                        {
                             phi[1][i][j] = phi_b[1][i][j] = 1.0; // the second one
                             init_zero(phi, phi_b, n, i, j);
                         }
-                        else if (n == 2 && (i <= (Nx / 6.0) * 5 + round && i >= (Nx / 6.0) * 5 - round))
+                        break;
+
+                    case 2:
+                        if ((i <= (Nx / 6.0) * 5 + round && i >= (Nx / 6.0) * 5 - round) && (j <= Ny / 2.0 + round && j >= Ny / 2.0 - round))
                         {
                             phi[2][i][j] = phi_b[2][i][j] = 1.0; // the third one
                             init_zero(phi, phi_b, n, i, j);
                         }
-                    }
-                }
-                else if (n == 3 || n == 4)
-                {
-                    // top and floor
-                    if (j <= round || j >= Ny - round)
-                    {
-                        if (n == 3 && (i <= Nx / 3.0 + round && i >= Nx / 3.0 - round))
+                        break;
+
+                    case 3:
+                        if ((i <= Nx / 3.0 + round && i >= Nx / 3.0 - round) && (j <= round || j >= Ny - round))
                         {
                             phi[3][i][j] = phi_b[3][i][j] = 1.0; // the forth one
                             init_zero(phi, phi_b, n, i, j);
                         }
-                        else if (n == 4 && (i <= (Nx / 3.0) * 2 + round && i >= (Nx / 3.0) * 2 - round))
+                        break;
+
+                    case 4:
+                        if ((i <= (Nx / 3.0) * 2 + round && i >= (Nx / 3.0) * 2 - round) && (j <= round || j >= Ny - round))
                         {
                             phi[4][i][j] = phi_b[4][i][j] = 1.0; // the fifth one
                             init_zero(phi, phi_b, n, i, j);
                         }
-                    }
-                }
+                        break;
 
-                // the corner of grid
-                else if (n == 5)
-                {
-                    if ((i <= round && j <= round) || (i >= Nx - round && j <= round) || (i >= Nx - round && j >= Ny - round) || (i <= round && j >= Ny - round))
-                    {
-                        phi[5][i][j] = phi_b[5][i][j] = 1.0; // the sixth one
-                        init_zero(phi, phi_b, n, i, j);
-                    }
+                    case 5:
+                        if ((i <= round && j <= round) || (i >= Nx - round && j <= round) || (i >= Nx - round && j >= Ny - round) || (i <= round && j >= Ny - round))
+                        {
+                            phi[5][i][j] = phi_b[5][i][j] = 1.0; // the sixth one
+                            init_zero(phi, phi_b, n, i, j);
+                        }
+                        break;
                 }
             }
         }
@@ -250,6 +269,21 @@ void output(double phi_b[][Nx][Ny], int N, int Nx, int Ny, int fileNum) {
         }
     }
 
+    // TEST: here we use the data to test the result
+    // for (int n = 0; n < N; n++)
+    // {
+    //     for (int i = 0; i < Nx; i++)
+    //     {
+    //         for (int j = 0; j < Ny; j++)
+    //         {
+    //             if (phi_b[n][i][j] == 1)
+    //             {
+    //                 cout << n << " " << i << " " << j << endl;
+    //             }
+    //         }
+    //     }
+    // }
+
     // output the vtk files
     // fstream outfile;
     fstream outfile;
@@ -268,7 +302,7 @@ void output(double phi_b[][Nx][Ny], int N, int Nx, int Ny, int fileNum) {
     outfile << filename << endl;
     outfile << "ASCII " << endl;
     outfile << "DATASET STRUCTURED_GRID" << endl;
-    outfile << "DIMENSIONS " << Nx << " " << Ny << " " << 1 << endl;
+    outfile << "DIMENSIONS " << Ny << " " << Nx << " " << 1 << endl;
     outfile << "POINTS " << Nx * Ny * 1 << " float" << endl;
     for (int i = 0; i < Nx; i++)
     {
@@ -311,7 +345,7 @@ int ti(int i)
 
 int tj(int j)
 {
-    // i will be out of bound
+    // j will be out of bound
     if (j == -1)
     {
         return Ny - 2;
