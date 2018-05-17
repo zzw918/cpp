@@ -9,7 +9,7 @@
 #define PI 3.1415926
 using namespace std; 
 
-const int N = 24; // the total number of grains
+const int N = 25; // the total number of grains
 // that Nx is 120 and Ny is 70 is fit
 const int Nx = 256; // the x-axis grid numbers
 const int Ny = 150; // the y-axis grid numbers
@@ -49,7 +49,7 @@ int main()
     // set the interval time and the whole time
     // for 24 grains, that daletT is 0.01 and allTime is 4.0 is fit
     double deltaT = 0.01,                 // timeInterval
-           allTime = 4.0;                  // the whole time to grow
+           allTime = 30.0;                  // the whole time to grow
 
     double garma = 0.208,                  //  J/m2
            deltaX = 0.5e-6,
@@ -85,11 +85,18 @@ int main()
                 {
                     double temp = 0.0;
                     double dif = 0.0;
+                    double E = 0.0;
                     for (k = 0; k < N; k++)
                     {
+                        if (n == N - 1 && k != N - 1) {
+                            E = -0.09e6;
+                        }
+                        if (n != N - 1 && k == N - 1) {
+                            E = +0.09e6;
+                        }
                         dif = ((phi[k][ti(i + 1)][j] + phi[k][ti(i - 1)][j] + phi[k][i][tj(j + 1)] + phi[k][i][tj(j - 1)] - 4 * phi[k][i][j]) 
                         - (phi[n][ti(i + 1)][j] + phi[n][ti(i - 1)][j] + phi[n][i][tj(j + 1)] + phi[n][i][tj(j - 1)] - 4 * phi[n][i][j])) / pow(deltaX, 2);
-                        temp += (2 * M / N) * (W * (phi[k][i][j] - phi[n][i][j]) + 0.5 * pow(a, 2) * dif);
+                        temp += (2 * M / N) * (W * (phi[k][i][j] - phi[n][i][j]) + 0.5 * pow(a, 2) * dif - 8/PI*pow(phi[n][i][j] * phi[k][i][j], 0.5) * E);
                     }
                     phi_b[n][i][j] = -temp * deltaT + phi[n][i][j];
                     if (phi_b[n][i][j] < 10e-5) {
@@ -149,12 +156,15 @@ int main()
 
 // define the initiated function
 void init(double phi[][Nx][Ny], double phi_b[][Nx][Ny], int N, int Nx, int Ny) {
-    int round = 3;
+    int round = 7;
     // first, make all the grain's phi be 1.0/24.0
     for (int n = 0; n < N; n++) {
         for (int i = 0; i < Nx; i++) {
             for (int j = 0; j < Ny; j++) {
-                phi[n][i][j] = phi_b[n][i][j] = 1.0/24.0;
+                phi[n][i][j] = phi_b[n][i][j] = 0;
+                if (n == N - 1) {
+                    phi[n][i][j] = phi_b[n][i][j] = 1;
+                }
             }
         }
     }
@@ -365,26 +375,6 @@ void init(double phi[][Nx][Ny], double phi_b[][Nx][Ny], int N, int Nx, int Ny) {
                             init_zero(phi, phi_b, n, i, j);
                         }
                         break;
-                }
-            }
-        }
-    }
-
-    for (int i = 0; i < Nx; i++)
-    {
-        for (int j = 0; j < Ny; j++)
-        {
-            double sum = 0.0;
-            for (int n = 0; n < N; n++)
-            {
-                sum += phi[n][i][j];
-            }
-            if (sum > 0.0)
-            {
-                for (int n = 0; n < N; n++)
-                {
-                    double temp = phi[n][i][j];
-                    phi[n][i][j] = temp / sum;
                 }
             }
         }

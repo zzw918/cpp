@@ -6,7 +6,6 @@
 #include <iomanip>
 #include <direct.h>
 #include <windows.h>
-#include <stdlib.h>
 #define PI 3.1415926
 using namespace std; 
 
@@ -16,6 +15,7 @@ const int Ny = 70 * 2; // the y-axis grid numbers
 
 int ti(int); // deal with x-axis periodic boundry
 int tj(int); // deal with y-axis periodic boundry
+
 void output(double phi_b[][Nx][Ny], int N, int Nx, int Ny, int fileNum); // difine the output function
 void init(double phi[][Nx][Ny], double phi_b[][Nx][Ny], int N, int Nx, int Ny); // define the initiated function
 void init_zero(double phi[][Nx][Ny], double phi_b[][Nx][Ny], int n, int i, int j); // init the area where is not belong to the core
@@ -30,17 +30,6 @@ int main()
 
     // init the phi value
     init(phi, phi_b, N, Nx, Ny);
-
-    // TEST, test the data, look if it is right
-    // for (int n = 0; n < N; n++) {
-    //     for (int i = 0; i < Nx; i++) {
-    //         for (int j = 0; j < Ny; j++) {
-    //             if (phi[n][i][j] == 1) {
-    //                 cout << n << " " << i << " " << j << endl;
-    //             }
-    //         }
-    //     }
-    // }
 
     // output the initiated file here
     output(phi_b, N, Nx, Ny, 0);
@@ -60,8 +49,6 @@ int main()
            W = 4 * garma / thigma,
            a = (2 / PI) * pow(2 * thigma * garma, 0.5),
            M = (0.139 / T) * exp(-Qb / (R * T)) * PI * PI / (8 * thigma);
-        
-    
 
     double curTime = 0.0;
     int aid = 0; // to help show output
@@ -85,12 +72,11 @@ int main()
             {
                 for (int j = 0; j < Ny; j++)
                 {
-                    double E = 0.0;
                     double temp = 0.0;
                     double dif = 0.0;
+                    double E = 0.0;
                     for (k = 0; k < N; k++)
                     {
-                        // 这个E应该在这里！
                         if (n == N - 1 && k != N - 1) {
                             E = -0.09e6;
                         }
@@ -265,21 +251,6 @@ void output(double phi_b[][Nx][Ny], int N, int Nx, int Ny, int fileNum) {
         }
     }
 
-    // TEST: here we use the data to test the result
-    // for (int n = 0; n < N; n++)
-    // {
-    //     for (int i = 0; i < Nx; i++)
-    //     {
-    //         for (int j = 0; j < Ny; j++)
-    //         {
-    //             if (phi_b[n][i][j] == 1)
-    //             {
-    //                 cout << n << " " << i << " " << j << endl;
-    //             }
-    //         }
-    //     }
-    // }
-
     // output the vtk files
     // fstream outfile;
     fstream outfile;
@@ -287,8 +258,7 @@ void output(double phi_b[][Nx][Ny], int N, int Nx, int Ny, int fileNum) {
     char num[20];
     char foldername[20] = "./outputfolder/";
     // _mkdir(foldername); // not completed!
-    // itoa(fileNum, num, 10);
-    sprintf(num, "%d", fileNum);
+    itoa(fileNum, num, 10);
     strcat(strcat(filename, num), ".vtk");
     outfile.open(strcat(foldername, filename), ios::out);
     if (!outfile)
