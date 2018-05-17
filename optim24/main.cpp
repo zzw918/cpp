@@ -12,8 +12,8 @@
 #define PI 3.1415926
 using namespace std;
 
-// 多数情况下每一组的晶粒数是不会超过3的，只有在最终多个晶体交接处，才会出现晶粒数为4的情况。
-// 注意：大于1的数字，必须要修正；小于10e-5的数字，必须要修正
+// 尽管是25个晶粒，但是一般情况下晶格超过3个的情况是不多的。
+// 注意：大于1的数字，必须要修正；小于10e-5的数字，必须要修正。
 
 // 创建晶粒结构体，key为晶粒标号，phi为对应的相场值。
 struct Grain
@@ -28,9 +28,10 @@ bool LessSort(Grain a, Grain b)
     return (a.phi > b.phi);
 };
 
-const int N = 7; // the total number of grains
-const int Nx = 200; // the x-axis grid numbers
-const int Ny = 120; // the y-axis grid numbers
+const int N = 25; // the total number of grains
+const int GMax = 3;
+const int Nx = 256; // the x-axis grid numbers
+const int Ny = 150; // the y-axis grid numbers
 
 int ti(int); // deal with x-axis periodic boundry
 int tj(int); // deal with y-axis periodic boundry
@@ -44,7 +45,7 @@ double phi(vector<struct Grain> grid[][Ny], vector<struct Grain>::iterator it[][
 
 int main()
 {
-    cout << "Begin to calculate with six grains kim algorithm!" << endl;
+    cout << "Begin to calculate 24 grains with kim algorithm!" << endl;
     // grid为当前时刻网格vector，gird_b为下一时刻；it和it_b为对应的迭代器。
     vector<struct Grain> grid[Nx][Ny];
     vector<struct Grain> grid_b[Nx][Ny];
@@ -58,7 +59,7 @@ int main()
     int round = 7;
     // 首先，对基体进行初始化
     Grain grain;
-    grain = {6, 1.0}; // 创建标号为6的晶粒的phi值为1.0
+    grain = {24, 1.0}; // 创建标号为24的晶粒的phi值为1.0
     for (int i = 0; i < Nx; i++)
     {
         for (int j = 0; j < Ny; j++)
@@ -85,41 +86,169 @@ int main()
                 switch (n)
                 {
                 case 0:
-                    if ((i <= Nx / 6.0 + round && i >= Nx / 6.0 - round) && (j <= Ny / 2.0 + round && j >= Ny / 2.0 - round))
+                    if ((i <= Nx / 12.0 + round && i >= Nx / 12.0 - round) && (j <= (Ny / 4.0) * 3 + round && j >= (Ny / 4.0) * 3 - round))
                     {
                         init(grain, grid, grid_b, n, i, j);
                     }
                     break;
 
                 case 1:
-                    if ((i <= (Nx / 6.0) * 3 + round && i >= (Nx / 6.0) * 3 - round) && (j <= Ny / 2.0 + round && j >= Ny / 2.0 - round))
+                    if ((i <= (Nx / 12.0) * 3 + round && i >= (Nx / 12.0) * 3 - round) && (j <= (Ny / 4.0) * 3 + round && j >= (Ny / 4.0) * 3 - round))
                     {
                         init(grain, grid, grid_b, n, i, j);
                     }
                     break;
 
                 case 2:
-                    if ((i <= (Nx / 6.0) * 5 + round && i >= (Nx / 6.0) * 5 - round) && (j <= Ny / 2.0 + round && j >= Ny / 2.0 - round))
+                    if ((i <= (Nx / 12.0) * 5 + round && i >= (Nx / 12.0) * 5 - round) && (j <= (Ny / 4.0) * 3 + round && j >= (Ny / 4.0) * 3 - round))
                     {
                         init(grain, grid, grid_b, n, i, j);
                     }
                     break;
 
                 case 3:
-                    if ((i <= Nx / 3.0 + round && i >= Nx / 3.0 - round) && (j <= round || j >= Ny - round))
+                    if ((i <= (Nx / 12.0) * 7 + round && i >= (Nx / 12.0) * 7 - round) && (j <= (Ny / 4.0) * 3 + round && j >= (Ny / 4.0) * 3 - round))
                     {
                         init(grain, grid, grid_b, n, i, j);
                     }
                     break;
 
                 case 4:
-                    if ((i <= (Nx / 3.0) * 2 + round && i >= (Nx / 3.0) * 2 - round) && (j <= round || j >= Ny - round))
+                    if ((i <= (Nx / 12.0) * 9 + round && i >= (Nx / 12.0) * 9 - round) && (j <= (Ny / 4.0) * 3 + round && j >= (Ny / 4.0) * 3 - round))
                     {
                         init(grain, grid, grid_b, n, i, j);
                     }
                     break;
 
                 case 5:
+                    if ((i <= (Nx / 12.0) * 11 + round && i >= (Nx / 12.0) * 11 - round) && (j <= (Ny / 4.0) * 3 + round && j >= (Ny / 4.0) * 3 - round))
+                    {
+                        init(grain, grid, grid_b, n, i, j);
+                    }
+                    break;
+
+                case 6:
+                    if ((i <= (Nx / 12.0) * 2 + round && i >= (Nx / 12.0) * 2 - round) && (j <= (Ny / 4.0) * 2 + round && j >= (Ny / 4.0) * 2 - round))
+                    {
+                        init(grain, grid, grid_b, n, i, j);
+                    }
+                    break;
+
+                case 7:
+                    if ((i <= (Nx / 12.0) * 4 + round && i >= (Nx / 12.0) * 4 - round) && (j <= (Ny / 4.0) * 2 + round && j >= (Ny / 4.0) * 2 - round))
+                    {
+                        init(grain, grid, grid_b, n, i, j);
+                    }
+                    break;
+
+                case 8:
+                    if ((i <= (Nx / 12.0) * 6 + round && i >= (Nx / 12.0) * 6 - round) && (j <= (Ny / 4.0) * 2 + round && j >= (Ny / 4.0) * 2 - round))
+                    {
+                        init(grain, grid, grid_b, n, i, j);
+                    }
+                    break;
+
+                case 9:
+                    if ((i <= (Nx / 12.0) * 8 + round && i >= (Nx / 12.0) * 8 - round) && (j <= (Ny / 4.0) * 2 + round && j >= (Ny / 4.0) * 2 - round))
+                    {
+                        init(grain, grid, grid_b, n, i, j);
+                    }
+                    break;
+
+                case 10:
+                    if ((i <= (Nx / 12.0) * 10 + round && i >= (Nx / 12.0) * 10 - round) && (j <= (Ny / 4.0) * 2 + round && j >= (Ny / 4.0) * 2 - round))
+                    {
+                        init(grain, grid, grid_b, n, i, j);
+                    }
+                    break;
+
+                case 11:
+                    if ((i <= Nx / 12.0 + round && i >= Nx / 12.0 - round) && (j <= (Ny / 4.0) * 1 + round && j >= (Ny / 4.0) * 1 - round))
+                    {
+                        init(grain, grid, grid_b, n, i, j);
+                    }
+                    break;
+
+                case 12:
+                    if ((i <= (Nx / 12.0) * 3 + round && i >= (Nx / 12.0) * 3 - round) && (j <= (Ny / 4.0) * 1 + round && j >= (Ny / 4.0) * 1 - round))
+                    {
+                        init(grain, grid, grid_b, n, i, j);
+                    }
+                    break;
+
+                case 13:
+                    if ((i <= (Nx / 12.0) * 5 + round && i >= (Nx / 12.0) * 5 - round) && (j <= (Ny / 4.0) * 1 + round && j >= (Ny / 4.0) * 1 - round))
+                    {
+                        init(grain, grid, grid_b, n, i, j);
+                    }
+                    break;
+
+                case 14:
+                    if ((i <= (Nx / 12.0) * 7 + round && i >= (Nx / 12.0) * 7 - round) && (j <= (Ny / 4.0) * 1 + round && j >= (Ny / 4.0) * 1 - round))
+                    {
+                        init(grain, grid, grid_b, n, i, j);
+                    }
+                    break;
+
+                case 15:
+                    if ((i <= (Nx / 12.0) * 9 + round && i >= (Nx / 12.0) * 9 - round) && (j <= (Ny / 4.0) * 1 + round && j >= (Ny / 4.0) * 1 - round))
+                    {
+                        init(grain, grid, grid_b, n, i, j);
+                    }
+                    break;
+
+                case 16:
+                    if ((i <= (Nx / 12.0) * 11 + round && i >= (Nx / 12.0) * 11 - round) && (j <= (Ny / 4.0) * 1 + round && j >= (Ny / 4.0) * 1 - round))
+                    {
+                        init(grain, grid, grid_b, n, i, j);
+                    }
+                    break;
+
+                case 17:
+                    if ((i <= Nx / 6.0 + round && i >= Nx / 6.0 - round) && (j <= round || j >= Ny - round))
+                    {
+                        init(grain, grid, grid_b, n, i, j);
+                    }
+                    break;
+
+                case 18:
+                    if ((i <= (Nx / 6.0) * 2 + round && i >= (Nx / 6.0) * 2 - round) && (j <= round || j >= Ny - round))
+                    {
+                        init(grain, grid, grid_b, n, i, j);
+                    }
+                    break;
+
+                case 19:
+                    if ((i <= (Nx / 6.0) * 3 + round && i >= (Nx / 6.0) * 3 - round) && (j <= round || j >= Ny - round))
+                    {
+                        init(grain, grid, grid_b, n, i, j);
+                    }
+                    break;
+
+                case 20:
+                    if ((i <= (Nx / 6.0) * 4 + round && i >= (Nx / 6.0) * 4 - round) && (j <= round || j >= Ny - round))
+                    {
+                        init(grain, grid, grid_b, n, i, j);
+                    }
+                    break;
+
+                case 21:
+                    if ((i <= (Nx / 6.0) * 5 + round && i >= (Nx / 6.0) * 5 - round) && (j <= round || j >= Ny - round))
+                    {
+                        init(grain, grid, grid_b, n, i, j);
+                    }
+                    break;
+
+                // grain 23
+                case 22:
+                    if ((i <= round || i >= Nx - round) && (j <= (Ny / 4.0) * 2 + round && j >= (Ny / 4.0) * 2 - round))
+                    {
+                        init(grain, grid, grid_b, n, i, j);
+                    }
+                    break;
+
+                // grain 24
+                case 23:
                     if ((i <= round && j <= round) || (i >= Nx - round && j <= round) || (i >= Nx - round && j >= Ny - round) || (i <= round && j >= Ny - round))
                     {
                         init(grain, grid, grid_b, n, i, j);
@@ -136,7 +265,7 @@ int main()
 
     // set the interval time and the whole time
     double deltaT = 0.01,                 // timeInterval
-          allTime = 18.0;                // the whole time to grow
+          allTime = 10.0;                // the whole time to grow
 
     double garma = 0.208,                  //  J/m2
            deltaE = 0.09,
@@ -155,7 +284,7 @@ int main()
     int number = 1; // filename number mark
 
     int files = 8; // file numbers
-    int times = 0; // 计算每个格点计算演化方程的平均次数。
+    
     while (curTime < allTime)
     {   
         if ((aid % (int(allTime / deltaT) / files)) == 0) {
@@ -169,7 +298,6 @@ int main()
         // kKey表示相邻晶粒的序号，通过序号寻找相应Phi值。
         int kKey = 0;
 
-
         for (int i = 0; i < Nx; i++)
         {
             for (int j = 0; j < Ny; j++)
@@ -181,9 +309,7 @@ int main()
                 {
                     double temp = 0.0;
                     double dif = 0.0;
-                    // FIXME: 这里的E应该如何设置？
                     itKey = it[i][j]->key; 
-                    times++;
                     for (k[i][j] = grid[i][j].begin(); k[i][j] != grid[i][j].end(); k[i][j]++)
                     {
                         double E = 0.0;
@@ -227,18 +353,18 @@ int main()
                     grainNum++;
                 }
                 if (grainNum > 3) {
-                    cout << grainNum << " ";
+                    cout << grainNum;
                 }
 
                 // 先判断晶粒总数是否大于3(我们指定的最大晶粒数)，如果大于则排序，否则不用排序！
-                if (grid_b[i][j].size() > 3) {
+                if (grid_b[i][j].size() > GMax) {
                     // 排序(从大到小)
                     sort(grid_b[i][j].begin(), grid_b[i][j].end(), LessSort);
                     // 删除前三大的结构体
                     int tem = 0;
                     for (it_b[i][j] = grid_b[i][j].begin(); it_b[i][j] != grid_b[i][j].end(); it_b[i][j]++)
                     {
-                        if (tem > 2) {
+                        if (tem > GMax - 1) {
                             grid_b[i][j].erase(it_b[i][j]);
                             it_b[i][j]--;
                         }
@@ -375,7 +501,6 @@ int main()
             system("pause");
         }
     }
-    cout << "average grid calculate grains: " << (times/aid)/(Nx*Ny) << endl;
     cout << "calculate end!" << endl << endl;
     system("pause");
     return 0;
