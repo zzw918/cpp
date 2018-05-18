@@ -118,7 +118,5 @@ int main() {
     cout << temppp / sizeee << endl;
     cout << 0.1 << endl;
 
-    cout << 1e-555 << endl;
-
     system("pause");
 }
