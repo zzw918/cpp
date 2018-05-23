@@ -1,3 +1,4 @@
+// 6个晶粒优化长大
 #include <iostream>
 #include <math.h>
 #include <cmath>
@@ -55,7 +56,7 @@ int main()
     // 演化方程运算中使用，即可相邻晶粒进行运算时使用
     vector<struct Grain>::iterator k[Nx][Ny];
 
-    int round = 7;
+    int round = 2;
     // 首先，对基体进行初始化
     Grain grain;
     grain = {6, 1.0}; // 创建标号为6的晶粒的phi值为1.0
