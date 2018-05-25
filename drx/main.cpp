@@ -13,17 +13,14 @@
 #define PI 3.1415926
 using namespace std;
 
+// 这里我们的网格数设置到了628 * 400，所以为了能够保证晶粒长大，需要将时间(allTime)调整到70；
+// 另外，再结晶也是一样的，需要对再结晶的时间加长，之前为40，可以继续提高。
+
 // 最新问题：这个再结晶的确和之前是不同的，主要是因为最开始生成的晶粒，它的位错密度要达到临界位错密度需要一定的时间，这个时间中，这些晶粒已经长得很大了，如果可以控制让他涨的慢一些，那么效果可能会好一些
 // 在一篇文献上说，M成为原来的1/4，E成为原来的4倍，是不是就是在做这个工作呢？可以首先尝试一下。
+// 结果： 这里应该是扩大计算域，自然新形成的晶核生长速度看上去就变慢了。
 
 // ATTENTION: 目前如果某个晶粒彻底缩小消失之后，还是没有删除rhovec中的晶粒值的，这个需要注意。
-
-// ATTENTION: 再结晶阶段，储能(驱动力)E是否始终为0，还是将最开始长大后的六边形晶粒类似于之前的基体；如果为0，那么就相当于晶粒粗话，大的增大，小的减小，这样，刚生长出来的晶体
-// 存活不就就会消失；如果是把六边形晶粒当做是基体，储能(驱动力)参与计算，那么E值应该不是静止不动的。
-// E应该是变化的，否则，晶粒长大一部分之后，就会消失。
-
-// ATTENTION: 晶粒再结晶过程中，达到临界位错密度需要较长的时间，所以，我们可以把再结晶的时间继续放大。
-// FIXME: 再结晶过程中，为什么还会有大于0的值(1.1)呢？能否强行修正，在output函数中！我觉得是可以的！
 
 // 多数情况下每一组的晶粒数是不会超过3的，只有在最终多个晶体交接处，才会出现晶粒数为4的情况。
 // 注意：大于1的数字，必须要修正；小于10e-5的数字，必须要修正
@@ -50,9 +47,14 @@ bool LessSort(Grain a, Grain b)
 };
 
 // 本程序为晶粒再结晶程序。在晶粒长大阶段，N值不会发生变化；但在再结晶时，会在晶界处生成新的晶核，所以N值会发生变化。主要用于序号。
-int N = 7;    
-const int Nx = 200; // the x-axis grid numbers
-const int Ny = 120; // the y-axis grid numbers
+int N = 7;
+// const int Nx = 628; // the x-axis grid numbers
+// const int Ny = 400; // the y-axis grid numbers
+const int Nx = 1256; // the x-axis grid numbers
+const int Ny = 800; // the y-axis grid numbers
+
+// 输出文件时使用的二维数组
+static double phi_o[Nx][Ny];
 
 int ti(int); // deal with x-axis periodic boundry
 int tj(int); // deal with y-axis periodic boundry
@@ -69,19 +71,20 @@ int main()
     cout << "Begin to calculate six grains with kim algorithm!" << endl;
 
     // grid为当前时刻网格vector，gird_b为下一时刻；it和it_b为对应的迭代器。
-    vector<struct Grain> grid[Nx][Ny];
-    vector<struct Grain> grid_b[Nx][Ny];
+    static vector<struct Grain> grid[Nx][Ny];
+    static vector<struct Grain> grid_b[Nx][Ny];
 
-    vector<struct Grain>::iterator it[Nx][Ny];
-    vector<struct Grain>::iterator it_b[Nx][Ny];
+    static vector<struct Grain>::iterator it[Nx][Ny];
+    static vector<struct Grain>::iterator it_b[Nx][Ny];
 
     // 演化方程运算中使用，即可相邻晶粒进行运算时使用
-    vector<struct Grain>::iterator k[Nx][Ny];
+    static vector<struct Grain>::iterator k[Nx][Ny];
 
     int round = 5;
     // 首先，对基体进行初始化
     Grain grain;
     grain = {N - 1, 1.0}; // 创建标号为6的晶粒的phi值为1.0
+   
     for (int i = 0; i < Nx; i++)
     {
         for (int j = 0; j < Ny; j++)
@@ -95,6 +98,7 @@ int main()
             it_b[i][j] = grid_b[i][j].begin();
         }
     }
+    
 
     for (int i = 0; i < Nx; i++)
     {
@@ -150,15 +154,19 @@ int main()
             }
         }
     }
+    
 
     // 初始化相场输出
     output(grid_b, it_b, N, Nx, Ny, 0);
+    
+    // cout << "over" << endl;
+    // system("pause");
 
     // set the interval time and the whole time
     double deltaT = 0.01; // timeInterval
 
     double garma = 0.208, //  J/m2
-           allTime = 25.0,   // the whole time to grow    
+           allTime = 140.0,   // the whole time to grow    
            deltaE = 0.09,
            deltaX = 0.5e-6,
            Qb = 110e3,       //  j/mol
@@ -173,7 +181,9 @@ int main()
     int aid = 0;    // to help show output
     int number = 1; // filename number mark
 
-    int files = 8; // file numbers
+    
+
+    int files = 15; // file numbers
     while (curTime < allTime)
     {
         if ((aid % (int(allTime / deltaT) / files)) == 0)
@@ -381,6 +391,7 @@ int main()
             for (int j = 0; j < Ny; j++)
             {
                 grid[i][j].clear(); // 清空grid[i][j]，否则无法对应
+                vector<struct Grain>().swap(grid[i][j]); // 释放内存
                 for (it_b[i][j] = grid_b[i][j].begin(); it_b[i][j] != grid_b[i][j].end(); it_b[i][j]++)
                 {
                     grain = {it_b[i][j]->key, it_b[i][j]->phi};
@@ -409,19 +420,19 @@ int main()
            //sigama_c = 4.0e7, // 40Mpa
            //rhoc = pow((sigama_c / (A * U * B)), 2), 
            rhoc = 5.51e13, // 临界位错密度
-           k1 = 4e8, // 许婷
+           k1 = 4e8, // 
            A = 0.5, // 即aerfa
            A1 = 2.0e44,
            A2 = 7.6, // A1和A2用于计算sigma_s
            U = 4.21e10, // 即μ
            B = 2.56e-10, // 即伯氏矢量b
-           epsilon = 2e-3, //即埃普西隆，小e 许婷
+           epsilon = 2e-3, //即埃普西隆，小e 
            Qa = 2.75e5, // 激活能
            c = 5.0e25, // d和c是常量
            d = 1.0,
-           sigma_s = pow(A1 * epsilon * exp(Qa / (R * T)), 1/A2), // 许婷
+           sigma_s = pow(A1 * epsilon * exp(Qa / (R * T)), 1/A2), 
            k2 = A * U * B * k1 / sigma_s,
-           delta_n = c * pow(epsilon, d) * exp(-Qa / (R * T)); /// 许婷
+           delta_n = c * pow(epsilon, d) * exp(-Qa / (R * T));
            // 既然 ngb 和 step都是变化的，所以放在这里是不合适的，应该放在需要用到的位置。
         
     double tao = 0.5 * U * B * B;
@@ -440,12 +451,12 @@ int main()
     double refPointB = rho0;
 
     // 创建一个存储晶粒位错密度的结构体vector，结构体中存储key以及rho值：
-    vector<struct GrainRho> rhovec;
-    vector<struct GrainRho> rhovec_b;
+    static vector<struct GrainRho> rhovec;
+    static vector<struct GrainRho> rhovec_b;
     
     // 创建相应的迭代器
-    vector<struct GrainRho>::iterator itrho;
-    vector<struct GrainRho>::iterator itrho_b;
+    static vector<struct GrainRho>::iterator itrho;
+    static vector<struct GrainRho>::iterator itrho_b;
 
     // 设置初始位错密度
     for (int i = 0; i < Nx; i++) {
@@ -479,21 +490,20 @@ int main()
     double curTimeDRX = 0.0; // 时间从新开始
     int aidDRX = 0;    // to help show output
     int numberDRX = 100; // 标号从晶粒长大末尾更后面一些的标号开始，先防止覆盖，优化之后再做
-    // 之前是40，现在时间拉长一些
-    double allTimeDRX = 40.0;
+    double allTimeDRX = 200.0;
 
-    double roundDRX = 3;
+    double roundDRX = 5;
 
     int maxNum = 5; // 同一网格内phi值不为0的晶体个数，用于排序算法
 
     // 之前产生8个文件，现在产生12个文件
-    int filesDRX = 12; // file numbers
+    int filesDRX = 15; // file numbers
 
     int stepFlag = 0;
 
     int ngb = 0; // 这里ngb记录的满足条件（rho达到rhoc并且在境界上）的网格个数    
     // step是根据ngb的不同，而发生变化的，即要求的时间步
-    // double step = pow(delta_n * deltaT * ngb * deltaX * deltaX / thigma, -1); // 许婷
+    // double step = pow(delta_n * deltaT * ngb * deltaX * deltaX / thigma, -1); 
     // 开始ngb一定为0，所以，这里计算会出错，step为一个不可计算值
     double step = 0;
     
@@ -554,7 +564,6 @@ int main()
                             {
                                 sum += pow(it[i][j]->phi, 2);
                             }
-                            // sum < 1就表示处于晶界了，为什么许婷是说小于0.6呢？
                             if (sum < 0.6)
                             {
                                 // 每隔step时间步，也是不需要清空这个数组的，因为我们只要能准确记录ngb最终大小以及对应的坐标即可
@@ -584,8 +593,10 @@ int main()
                             {
                                 // 在某一格点处，一定是其他晶粒phi值均不存在，所以首先清空
                                 grid[i][j].clear();
+                                vector<struct Grain>().swap(grid[i][j]); // 释放内存
                                 grid_b[i][j].clear();
-    
+                                vector<struct Grain>().swap(grid_b[i][j]); // 释放内存
+
                                 // 然后将当前晶粒的grain储存在grid[i][j]中。
                                 grid[i][j].push_back(grain);
                                 grid_b[i][j].push_back(grain);
@@ -671,6 +682,7 @@ int main()
                             E = tao * (rhoj - rhoi);
 
                             dif = ((phi(grid, it, kKey, ti(i + 1), j) + phi(grid, it, kKey, ti(i - 1), j) + phi(grid, it, kKey, i, tj(j + 1)) + phi(grid, it, kKey, i, tj(j - 1)) - 4 * phi(grid, it, kKey, i, j)) - (phi(grid, it, itKey, ti(i + 1), j) + phi(grid, it, itKey, ti(i - 1), j) + phi(grid, it, itKey, i, tj(j + 1)) + phi(grid, it, itKey, i, tj(j - 1)) - 4 * phi(grid, it, itKey, i, j))) / pow(deltaX, 2);
+                            // FIXME: 这里的M需要除以4吗？ 
                             temp += (2 * M) * (W * (phi(grid, it, kKey, i, j) - phi(grid, it, itKey, i, j)) + 0.5 * pow(a, 2) * dif - 8 / PI * pow(phi(grid, it, itKey, i, j) * phi(grid, it, kKey, i, j), 0.5) * E);
                         }
 
@@ -854,6 +866,7 @@ int main()
                 for (int j = 0; j < Ny; j++)
                 {
                     grid[i][j].clear(); // 清空grid[i][j]，否则无法对应
+                    vector<struct Grain>().swap(grid[i][j]); // 释放内存
                     for (it_b[i][j] = grid_b[i][j].begin(); it_b[i][j] != grid_b[i][j].end(); it_b[i][j]++)
                     {
                         grain = {it_b[i][j]->key, it_b[i][j]->phi};
@@ -878,6 +891,7 @@ int main()
 
         // 同样地，rhovec也需要重新更新内容，这里进行深克隆
         rhovec.clear();
+        vector<struct GrainRho>().swap(rhovec); // 释放内存
         for (itrho_b = rhovec_b.begin(); itrho_b != rhovec_b.end(); itrho_b++)
         {
             grainRho = {itrho_b->key, itrho_b->rho};
@@ -927,7 +941,7 @@ double phi(vector<struct Grain> grid[][Ny], vector<struct Grain>::iterator it[][
 // define the output function
 void output(vector<struct Grain> grid_b[][Ny], vector<struct Grain>::iterator it_b[][Ny], int N, int Nx, int Ny, int fileNum)
 {
-    double phi_o[Nx][Ny];
+    // double phi_o[Nx][Ny];
     for (int i = 0; i < Nx; i++)
     {
         for (int j = 0; j < Ny; j++)
@@ -1014,7 +1028,7 @@ int tj(int j)
     }
     else if (j == Ny)
     {
-        return 1;
+        return 1; 
     }
     else
     {
