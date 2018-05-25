@@ -48,10 +48,9 @@ bool LessSort(Grain a, Grain b)
 
 // 本程序为晶粒再结晶程序。在晶粒长大阶段，N值不会发生变化；但在再结晶时，会在晶界处生成新的晶核，所以N值会发生变化。主要用于序号。
 int N = 7;
-// const int Nx = 628; // the x-axis grid numbers
-// const int Ny = 400; // the y-axis grid numbers
 const int Nx = 1256; // the x-axis grid numbers
 const int Ny = 800; // the y-axis grid numbers
+// alltime设置为140晶粒刚好可以在最后阶段长大
 
 // 输出文件时使用的二维数组
 static double phi_o[Nx][Ny];
@@ -682,7 +681,6 @@ int main()
                             E = tao * (rhoj - rhoi);
 
                             dif = ((phi(grid, it, kKey, ti(i + 1), j) + phi(grid, it, kKey, ti(i - 1), j) + phi(grid, it, kKey, i, tj(j + 1)) + phi(grid, it, kKey, i, tj(j - 1)) - 4 * phi(grid, it, kKey, i, j)) - (phi(grid, it, itKey, ti(i + 1), j) + phi(grid, it, itKey, ti(i - 1), j) + phi(grid, it, itKey, i, tj(j + 1)) + phi(grid, it, itKey, i, tj(j - 1)) - 4 * phi(grid, it, itKey, i, j))) / pow(deltaX, 2);
-                            // FIXME: 这里的M需要除以4吗？ 
                             temp += (2 * M) * (W * (phi(grid, it, kKey, i, j) - phi(grid, it, itKey, i, j)) + 0.5 * pow(a, 2) * dif - 8 / PI * pow(phi(grid, it, itKey, i, j) * phi(grid, it, kKey, i, j), 0.5) * E);
                         }
 
@@ -951,7 +949,6 @@ void output(vector<struct Grain> grid_b[][Ny], vector<struct Grain>::iterator it
             {
                 sum = sum + pow(it_b[i][j]->phi, 2);
             }
-            // FIXME: 这里可以强行修正吗？
             if (sum > 1) {
                 sum = 1;
             }
