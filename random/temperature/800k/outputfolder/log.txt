@@ -1,0 +1,7 @@
+2018/06/04 20:13:52
+Begin to calculate random 30-grains with kim algorithm!
+Nx: 300, Ny: 200.
+temperature T is: 800
+deltaT is 0.01, all files will be created every 500 steps.
+
+equivalent diameter: 

@@ -256,6 +256,9 @@ int main()
                     grainNum++;
                 }
 
+
+                // FIXME: 这里还需要进行归一化处理
+
                 // 先判断晶粒总数是否大于3(我们指定的最大晶粒数)，如果大于则排序，否则不用排序！
                 if (grid_b[i][j].size() > 3)
                 {
@@ -415,7 +418,7 @@ int main()
     // 以上，晶粒长大结束，下面进行动态再结晶过程的计算。
     // 动态再结晶是基于长大的过程进行计算的
     // 这里需要使用到一些新的变量，如rho等, A1, A2 
-    double rho0 = 10e9, // 初始位错密度
+    double rho0 = 1e9, // 初始位错密度
            //sigama_c = 4.0e7, // 40Mpa
            //rhoc = pow((sigama_c / (A * U * B)), 2), 
            rhoc = 5.51e13, // 临界位错密度
@@ -998,6 +1001,7 @@ void output(vector<struct Grain> grid_b[][Ny], vector<struct Grain>::iterator it
         }
     }
     outfile.close();
+    
 }
 
 // ti和tj都是为了处理周期边界条件所设定的。

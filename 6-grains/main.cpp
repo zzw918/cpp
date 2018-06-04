@@ -36,7 +36,7 @@ int main()
 
     // set the interval time and the whole time
     double deltaT = 0.01, // timeInterval
-        allTime = 40.0;   // the whole time to grow
+        allTime = 40.0;  // the whole time to grow
 
     double garma = 0.208, //  J/m2
             deltaE = 0.09,
